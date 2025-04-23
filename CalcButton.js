@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // Thêm useEffect để tải âm thanh
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Audio } from 'expo-av';
 
 const buttonStyles = {
   light: {
@@ -23,18 +24,52 @@ const buttonStyles = {
 export default function CalcButton({ value, onPress, theme }) {
   const currentButtonStyle = buttonStyles[theme] || buttonStyles.light;
 
-  return (
-    <TouchableOpacity
-      style={[styles.button, { backgroundColor: currentButtonStyle.backgroundColor }]}
-      onPress={() => onPress(value)}
-    >
-      <Text
-        style={[styles.buttonText, { color: currentButtonStyle.textColor }]}
-      >
-        {value}
-      </Text>
-    </TouchableOpacity>
-  );
+    // Thêm logic cho âm thanh
+    const [sound, setSound] = React.useState(null);
+
+    async function loadSound() {
+        try {
+            const { sound } = await Audio.Sound.createAsync(
+              require('./assets/sounds/click.mp3') // Đảm bảo file âm thanh tồn tại
+            );
+            setSound(sound);
+          } catch (error) {
+            console.log('Error loading sound:', error); // Xử lý lỗi tải âm thanh
+        }
+    }
+
+    async function playSound() {
+        if (sound) {
+        await sound.replayAsync(); // Phát lại âm thanh
+        }
+    }
+
+    useEffect(() => {
+        loadSound();
+        return () => {
+        if (sound) {
+            sound.unloadAsync(); // Dọn dẹp âm thanh khi component unmount
+        }
+        };
+    }, []);
+
+    const handlePress = () => {
+        playSound(); // Phát âm thanh
+        onPress(value); // Gọi hàm onPress từ prop
+    };
+
+    return (
+        <TouchableOpacity
+            style={[styles.button, { backgroundColor: currentButtonStyle.backgroundColor }]}
+            onPress={handlePress}
+          >
+            <Text
+              style={[styles.buttonText, { color: currentButtonStyle.textColor }]}
+            >
+              {value}
+            </Text>
+          </TouchableOpacity>
+    );
 }
 
 const styles = StyleSheet.create({
