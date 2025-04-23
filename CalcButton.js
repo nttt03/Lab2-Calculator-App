@@ -19,6 +19,10 @@ const buttonStyles = {
     backgroundColor: '#81c784',
     textColor: '#1b5e20',
   },
+  purple: {
+    backgroundColor: '#ce93d8',
+    textColor: '#4a148c',
+  }
 };
 
 export default function CalcButton({ value, onPress, theme }) {

@@ -45,6 +45,14 @@ const themes = {
     historyCardBackground: '#81c784',
     iconColor: '#388e3c',
   },
+  purple: {
+    backgroundColor: '#f3e5f5', 
+    textColor: '#4a148c', 
+    borderColor: '#ce93d8', 
+    modalBackgroundColor: '#ede7f6', 
+    historyCardBackground: '#ce93d8', 
+    iconColor: '#7b1fa2',
+  }
 };
 
 export default function App() {
@@ -64,7 +72,7 @@ export default function App() {
       setExpression(expression.slice(0, -1));
     } else if (value === '=') {
       if (expression === '') {
-        setResult('Error');
+        setResult('Nhập phép tính');
         return;
       }
       try {
@@ -74,7 +82,16 @@ export default function App() {
       } catch (error) {
         setResult('Error');
       }
-    } else {
+    }
+    // % ^ √
+    else if (value === '%') {
+      setExpression(expression + '*0.01');
+    } else if (value === '^') {
+      setExpression(expression + '^');
+    } else if (value === '√') {
+      setExpression('sqrt(' + expression + ')');
+    }
+    else {
       setExpression(expression + value);
     }
   };
@@ -101,8 +118,29 @@ export default function App() {
     ['4', '5', '6', '*'],
     ['1', '2', '3', '-'],
     ['0', '.', '=', '+'],
-    ['C', 'DEL'],
+    ['%', '^', '√', 'DEL'],
+    ['C'],
   ];
+
+  const renderRow = (row, rowIndex) => {
+    return (
+      <View style={styles.row} key={rowIndex}>
+        {row.map((btn, btnIndex) => {
+          if (btn === '') return <View key={btnIndex} style={styles.buttonPlaceholder} />;
+          const isEqualButton = btn === '=';
+          return (
+            <CalcButton
+              key={btnIndex}
+              value={btn}
+              onPress={handlePress}
+              theme={theme}
+              style={isEqualButton ? { flex: 4 } : {}}
+            />
+          );
+        })}
+      </View>
+    );
+  };
 
   const currentTheme = themes[theme]; // Lấy chủ đề hiện tại
 
