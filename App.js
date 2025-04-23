@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  Switch,
   FlatList,
   TouchableOpacity,
   Modal,
@@ -12,12 +11,50 @@ import { Entypo } from '@expo/vector-icons';
 import { evaluate } from 'mathjs';
 import CalcButton from './CalcButton';
 
+// Định nghĩa các chủ đề
+const themes = {
+  light: {
+    backgroundColor: '#fff',
+    textColor: '#000',
+    borderColor: '#ccc',
+    modalBackgroundColor: '#fff',
+    historyCardBackground: '#f5f5f5',
+    iconColor: '#333',
+  },
+  dark: {
+    backgroundColor: '#121212',
+    textColor: '#fff',
+    borderColor: '#444',
+    modalBackgroundColor: '#1e1e1e',
+    historyCardBackground: '#333',
+    iconColor: '#ccc',
+  },
+  blue: {
+    backgroundColor: '#e3f2fd',
+    textColor: '#0d47a1',
+    borderColor: '#90caf9',
+    modalBackgroundColor: '#bbdefb',
+    historyCardBackground: '#90caf9',
+    iconColor: '#1976d2',
+  },
+  green: {
+    backgroundColor: '#e8f5e9',
+    textColor: '#1b5e20',
+    borderColor: '#81c784',
+    modalBackgroundColor: '#c8e6c9',
+    historyCardBackground: '#81c784',
+    iconColor: '#388e3c',
+  },
+};
+
 export default function App() {
   const [expression, setExpression] = useState('');
   const [result, setResult] = useState('');
-  const [isDark, setIsDark] = useState(false);
+  // const [isDark, setIsDark] = useState(false);
+  const [theme, setTheme] = useState('light');
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   const handlePress = (value) => {
     if (value === 'C') {
@@ -50,6 +87,15 @@ export default function App() {
     setHistory([]);
   };
 
+  const toggleThemeModal = () => {
+    setShowThemeModal(!showThemeModal);
+  };
+
+  const selectTheme = (newTheme) => {
+    setTheme(newTheme);
+    setShowThemeModal(false);
+  };
+
   const buttons = [
     ['7', '8', '9', '/'],
     ['4', '5', '6', '*'],
@@ -58,30 +104,31 @@ export default function App() {
     ['C', 'DEL'],
   ];
 
+  const currentTheme = themes[theme]; // Lấy chủ đề hiện tại
+
   return (
-    <View style={[styles.container, isDark && styles.darkContainer]}>
+    <View style={[styles.container, { backgroundColor: currentTheme.backgroundColor }]}>
       {/* Header cố định ở phía trên */}
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={toggleHistory}>
-          <Entypo name="clock" size={24} color={isDark ? '#ccc' : '#333'} />
+          <Entypo name="clock" size={24} color={currentTheme.iconColor} />
         </TouchableOpacity>
-        <View style={styles.switchContainer}>
-          <Entypo name="light-up" size={24} color={isDark ? '#ccc' : '#333'} />
-          <Switch value={isDark} onValueChange={() => setIsDark(!isDark)} />
-          <Entypo name="moon" size={24} color={isDark ? '#ccc' : '#333'} />
-        </View>
+        {/* Theme */}
+        <TouchableOpacity onPress={toggleThemeModal}>
+          <Entypo name="light-up" size={24} color={currentTheme.iconColor} />
+        </TouchableOpacity>
       </View>
 
       {/* Nội dung chính: Biểu thức, kết quả, và grid nút */}
       <View style={styles.mainContent}>
         {/* Hiển thị biểu thức và kết quả */}
         <Text
-          style={[styles.expression, isDark ? styles.darkText : styles.lightText]}
+          style={[styles.expression, { color: currentTheme.textColor }]}
         >
           {expression}
         </Text>
         <Text
-          style={[styles.result, isDark ? styles.darkText : styles.lightText]}
+          style={[styles.result, { color: currentTheme.textColor }]}
         >
           {result}
         </Text>
@@ -95,7 +142,7 @@ export default function App() {
                   key={btnIndex}
                   value={btn}
                   onPress={handlePress}
-                  isDark={isDark}
+                  theme={theme} // Truyền theme thay vì isDark
                 />
               ))}
             </View>
@@ -111,13 +158,13 @@ export default function App() {
         onRequestClose={toggleHistory}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, isDark && styles.darkModalContent]}>
+          <View style={[styles.modalContent, { backgroundColor: currentTheme.modalBackgroundColor },]}>
             <View style={styles.modalHeader}>
               <View style={styles.headerTop}>
                 <Text
                   style={[
                     styles.historyTitle,
-                    isDark ? styles.darkText : styles.lightText,
+                    { color: currentTheme.textColor }
                   ]}
                 >
                   Lịch sử tính toán
@@ -126,7 +173,7 @@ export default function App() {
                   <Entypo
                     name="cross"
                     size={24}
-                    color={isDark ? '#ccc' : '#333'}
+                    color={currentTheme.iconColor}
                   />
                 </TouchableOpacity>
               </View>
@@ -149,7 +196,7 @@ export default function App() {
               <Text
                 style={[
                   styles.emptyHistory,
-                  isDark ? styles.darkText : styles.lightText,
+                  { color: currentTheme.textColor }
                 ]}
               >
                 Chưa có lịch sử
@@ -159,12 +206,17 @@ export default function App() {
                 data={history}
                 renderItem={({ item }) => (
                   <View
-                    style={[styles.historyCard, isDark && styles.darkHistoryCard]}
+                    style={[styles.historyCard, 
+                      {
+                        borderColor: currentTheme.borderColor,
+                        backgroundColor: currentTheme.historyCardBackground,
+                      },
+                    ]}
                   >
                     <Text
                       style={[
                         styles.historyItem,
-                        isDark ? styles.darkText : styles.lightText,
+                        { color: currentTheme.textColor }
                       ]}
                     >
                       {item}
@@ -178,17 +230,60 @@ export default function App() {
           </View>
         </View>
       </Modal>
+      {/* Modal chủ đề */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={showThemeModal}
+        onRequestClose={toggleThemeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.themeModalContent,
+              { backgroundColor: currentTheme.modalBackgroundColor },
+            ]}
+          >
+            <Text
+              style={[styles.modalTitle, { color: currentTheme.textColor }]}
+            >
+              Chọn chủ đề
+            </Text>
+            <FlatList
+              data={Object.keys(themes)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.themeOption}
+                  onPress={() => selectTheme(item)}
+                >
+                  <Text
+                    style={[styles.themeOptionText, { color: currentTheme.textColor }]}
+                  >
+                    {item.charAt(0).toUpperCase() + item.slice(1)} Theme
+                  </Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item}
+            />
+            <TouchableOpacity onPress={toggleThemeModal} style={styles.closeButton}>
+              <Text
+                style={[styles.closeButtonText, { color: currentTheme.textColor }]}
+              >
+                Đóng
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  darkContainer: {
-    backgroundColor: '#121212',
   },
   headerContainer: {
     flexDirection: 'row',
@@ -203,10 +298,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 1,
   },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   mainContent: {
     flex: 1,
     padding: 20,
@@ -220,15 +311,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
     marginTop: 15,
     width: '90%',
     minHeight: '90%',
   },
-  darkModalContent: {
-    backgroundColor: '#1e1e1e',
+  themeModalContent: {
+    borderRadius: 10,
+    padding: 20,
+    width: '80%',
+    maxHeight: '60%',
   },
   modalHeader: {
     marginBottom: 20,
@@ -257,11 +350,7 @@ const styles = StyleSheet.create({
   },
   historyCard: {
     borderBottomWidth: 1,
-    borderColor: '#ccc',
     padding: 10,
-  },
-  darkHistoryCard: {
-    borderColor: '#444',
   },
   historyItem: {
     fontSize: 20,
@@ -277,6 +366,30 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 10,
   },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  themeOption: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  themeOptionText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  closeButton: {
+    marginTop: 20,
+    padding: 10,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   result: {
     fontSize: 40,
     fontWeight: 'bold',
@@ -290,11 +403,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
-  },
-  lightText: {
-    color: '#000',
-  },
-  darkText: {
-    color: '#fff',
   },
 });
